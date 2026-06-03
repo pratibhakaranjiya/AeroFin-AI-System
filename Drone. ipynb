@@ -1,0 +1,63 @@
+import pandas as pd
+import numpy as np
+# 1000 drones data generate
+n_drones = 1000
+#  5 features data generator
+drone_data = {
+    'Engine_Temperature': np.random.randint(100, 400, n_drones),
+    'Battery_Level': np.random.randint(10, 100, n_drones),
+    'Speed': np.random.randint(50, 500, n_drones),
+    'Space_Radiation': np.random.randint(1, 10, n_drones),
+    'Fuel_Level': np.random.randint(0, 100, n_drones)
+}
+# Dictionary to Table (DataFrame)
+df = pd.DataFrame(drone_data)
+df.head()
+# Step 1: Calculate a mathematical risk score based on drone health features
+risk_calculation = (df['Engine_Temperature'] * 0.5) - (df['Fuel_Level'] * 0.3) + (df['Space_Radiation'] * 20)
+# Step 2: Convert risk score into a binary target label (1 = Critical, 0 = Safe)
+df['Is_Critical'] = (risk_calculation > 150).astype(int)
+# Step 3: Count how many drones are Safe (0) and Critical (1)
+print(df['Is_Critical'].value_counts())
+# Step 4: Display the first 5 rows of our updated table
+df.head()
+from sklearn.model_selection import train_test_split
+# Step 1: Separate inputs (X) from the target output (y)
+X = df[['Engine_Temperature', 'Battery_Level', 'Speed', 'Space_Radiation', 'Fuel_Level']]
+y = df['Is_Critical']
+# Step 2: Split data into 80% for training and 20% for testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Step 3: Print the size of training and testing data
+print("Total training samples (80%):", len(X_train))
+print("Total testing samples (20%):", len(X_test))
+from sklearn.preprocessing import StandardScaler
+# Step 1: Initialize the StandardScaler tool
+scaler = StandardScaler()
+# Step 2: Scale training and testing inputs to a standard range (-3 to +3)
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+# Step 3: Print the first scaled row to check the result
+print("Scaled Row 1:\n", X_train_scaled[0])
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+# 1. Create an empty brain box where layers will be added step-by-step
+model = Sequential()
+# 2. Input Layer: Take 5 drone features and connect to 32 brain cells (neurons)
+model.add(Dense(32, activation='relu', input_shape=(5,)))
+# 3. Safety Layer: Randomly turn off 20% brain cells so AI does not just memorize data
+model.add(Dropout(0.2))
+# 4. Hidden Layer: Add 16 more brain cells to do deeper mathematics and find patterns
+model.add(Dense(16, activation='relu'))
+# 5. Output Layer: Add 1 final cell to give the final answer: 0 (Safe) or 1 (Critical)
+model.add(Dense(1, activation='sigmoid'))
+# 6. Show Summary: Print the map of this brain on the screen
+model.summary()
+# 1. Configure the brain before training starts
+model.compile(
+    optimizer='adam',                 # The mechanic that automatically fixes brain mistakes
+    loss='binary_crossentropy',       # Mathematical formula to measure mistakes for 0 and 1
+    metrics=['accuracy']              # Shows the correct answer rate in percentage (%)
+)
+# 2. Confirm if compilation is done
+print("Model Compilation Successful! Ready for training.")
