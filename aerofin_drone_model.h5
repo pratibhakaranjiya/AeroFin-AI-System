@@ -1,0 +1,60 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report
+from google.colab import files
+
+# 1. Dataset Creation
+np.random.seed(42)
+drone_data = {
+    'Engine_Temperature': np.random.uniform(50, 400, 1000),
+    'Battery_Level': np.random.uniform(10, 100, 1000),
+    'Speed': np.random.uniform(10, 150, 1000),
+    'Space_Radiation': np.random.uniform(0, 10, 1000),
+    'Fuel_Level': np.random.uniform(5, 100, 1000)
+}
+df = pd.DataFrame(drone_data)
+
+# 2. Risk Target Calculation
+risk_calculation = (df['Engine_Temperature'] * 0.5) - (df['Fuel_Level'] * 0.3) + (df['Space_Radiation'] * 20)
+df['Is_Critical'] = (risk_calculation > 150).astype(int)
+
+# 3. Train-Test Split
+X = df[['Engine_Temperature', 'Battery_Level', 'Speed', 'Space_Radiation', 'Fuel_Level']]
+y = df['Is_Critical']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 4. Feature Scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# 5. ANN Architecture Design
+model = Sequential()
+model.add(Dense(32, activation='relu', input_shape=(5,)))
+model.add(Dropout(0.2))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+
+# 6. Model Compile & Training
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+print("Starting AI Training...")
+history = model.fit(X_train_scaled, y_train, epochs=20, batch_size=32, validation_split=0.2)
+print("AI Training Completed Successfully!")
+
+# 7. Print Classification Report Card
+raw_predictions = model.predict(X_test_scaled)
+final_predictions = (raw_predictions > 0.5).astype(int)
+print("\n=== AI MODEL REPORT CARD ===")
+print(classification_report(y_test, final_predictions, target_names=['Safe (0)', 'Critical (1)']))
+
+# 8. Save and Download the Brain File (.h5)
+model.save('aerofin_drone_model.h5')
+print("\nModel saved successfully as 'aerofin_drone_model.h5'!")
+files.download('aerofin_drone_model.h5')
+print("Downloading model file to your device...")
