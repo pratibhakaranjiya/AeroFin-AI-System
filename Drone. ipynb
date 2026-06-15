@@ -4,9 +4,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout 
+from tensorflow.keras.layers import Dense, Dropout
+import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report
+from google.colab import files
 
-# 1. Create Drone Dataset (1000 drones data)
+# 1. Dataset Creation
 np.random.seed(42)
 drone_data = {
     'Engine_Temperature': np.random.uniform(50, 400, 1000),
@@ -17,100 +20,41 @@ drone_data = {
 }
 df = pd.DataFrame(drone_data)
 
-# 2. Calculate Risk and Target Label (0 = Safe, 1 = Critical)
+# 2. Risk Target Calculation
 risk_calculation = (df['Engine_Temperature'] * 0.5) - (df['Fuel_Level'] * 0.3) + (df['Space_Radiation'] * 20)
 df['Is_Critical'] = (risk_calculation > 150).astype(int)
 
-# 3. Split Data into 80% Train and 20% Test
+# 3. Train-Test Split
 X = df[['Engine_Temperature', 'Battery_Level', 'Speed', 'Space_Radiation', 'Fuel_Level']]
 y = df['Is_Critical']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# 4. Scale the Features (Numbers normalization)
+# 4. Feature Scaling
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# 5. Design the Artificial Neural Network (ANN) Brain
+# 5. ANN Architecture Design
 model = Sequential()
-model.add(Dense(32, activation='relu', input_shape=(5,))) # Input + Hidden Layer 1
-model.add(Dropout(0.2))                                   # Dropout layer
-model.add(Dense(16, activation='relu'))                  # Hidden Layer 2
-model.add(Dense(1, activation='sigmoid'))                 # Output Layer
+model.add(Dense(32, activation='relu', input_shape=(5,)))
+model.add(Dropout(0.2))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
 
-# 6. Compile the Model (Setup Optimizer and Loss)
+# 6. Model Compile & Training
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-# 7. Start Training the AI
 print("Starting AI Training...")
 history = model.fit(X_train_scaled, y_train, epochs=20, batch_size=32, validation_split=0.2)
 print("AI Training Completed Successfully!")
 
-# 1. Test the trained AI model using hidden test data
-loss, accuracy = model.evaluate(X_test_scaled, y_test)
-
-# 2. Print the final test score in percentage (%)
-print(f"Final Test Accuracy: {accuracy * 100:.2f}%")
-
-# 1. Take a single drone's scaled data as input
-sample_drone = X_test_scaled[0:1]
-
-# 2. Ask the AI to predict if this drone is critical or not
-prediction = model.predict(sample_drone)
-
-# 3. Print the AI decision (closer to 1 means Critical, closer to 0 means Safe)
-print("AI Prediction Score:", prediction[0][0])
-
-
-import matplotlib.pyplot as plt
-
-# 1. Create a figure block for showing the graphs
-plt.figure(figsize=(12, 4))
-
-# 2. Graph 1: Plot the Training and Validation Accuracy
-plt.subplot(1, 2, 1)
-plt.plot(history.history['accuracy'], label='Train Accuracy')
-plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-plt.title('AI Accuracy Progress')
-plt.xlabel('Epochs (Rounds)')
-plt.ylabel('Accuracy Score')
-plt.legend()
-
-# 3. Graph 2: Plot the Training and Validation Loss (Mistakes)
-plt.subplot(1, 2, 2)
-plt.plot(history.history['loss'], label='Train Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.title('AI Loss (Mistakes) Reduction')
-plt.xlabel('Epochs (Rounds)')
-plt.ylabel('Loss Score')
-plt.legend()
-
-# 4. Show both graphs on the screen
-plt.show()
-
-from sklearn.metrics import classification_report, confusion_matrix
-import numpy as np
-
-# 1. Ask the AI to predict risk for all 200 test drones
-# It will give answers in probability (like 0.85, 0.12, etc.)
+# 7. Print Classification Report Card
 raw_predictions = model.predict(X_test_scaled)
-
-# 2. Convert probabilities into clear 0 (Safe) or 1 (Critical)
-# If score is more than 0.5, it is 1 (Critical), else 0 (Safe)
 final_predictions = (raw_predictions > 0.5).astype(int)
-
-# 3. Generate and print the complete professional report card of the AI
-print("=== AI MODEL REPORT CARD ===")
+print("\n=== AI MODEL REPORT CARD ===")
 print(classification_report(y_test, final_predictions, target_names=['Safe (0)', 'Critical (1)']))
 
-
-from google.colab import files
-
-# 1. Save the trained AI brain as a permanent file named 'aerofin_drone_model.h5'
+# 8. Save and Download the Brain File (.h5)
 model.save('aerofin_drone_model.h5')
-print("Model saved successfully in Colab!")
-
-# 2. Trigger automatic download to save the file in your phone's Downloads folder
+print("\nModel saved successfully as 'aerofin_drone_model.h5'!")
 files.download('aerofin_drone_model.h5')
-print("Downloading file to your local device...")
-
+print("Downloading model file to your device...")
