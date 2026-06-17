@@ -17,7 +17,7 @@ fuel = st.number_input("Fuel Level (%)", min_value=5.0, max_value=100.0, value=7
 if st.button("Predict Drone Status"):
     try:
         # Load the uploaded AI brain file
-        model = tf.keras.models.load_model('aerofin_drone_model.h5')
+        model = tf.keras.models.load_model('aerofin_drone_model.keras')
         
         # Structure the inputs
         raw_inputs = np.array([[temp, battery, speed, radiation, fuel]])
